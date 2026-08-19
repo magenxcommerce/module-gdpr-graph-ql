@@ -1,6 +1,6 @@
 {
     "name": "magenxcommerce/module-gdpr-graph-ql",
-    "description": "GraphQL surface for the GDPR cookie registry, consent logging and data-subject request tracking (magenxcommerce/module-gdpr).",
+    "description": "GraphQL surface for the GDPR cookie registry, consent logging and data-subject request tracking.",
     "config": {
         "sort-packages": true
     },
