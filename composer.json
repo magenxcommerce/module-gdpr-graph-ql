@@ -7,7 +7,9 @@
     "require": {
         "php": "~8.1.0||~8.2.0||~8.3.0||~8.4.0",
         "magento/framework": "*",
+        "magento/module-customer": "*",
         "magento/module-graph-ql": "*",
+        "magento/module-sales": "*",
         "magenxcommerce/module-gdpr": "*"
     },
     "type": "magento2-module",
