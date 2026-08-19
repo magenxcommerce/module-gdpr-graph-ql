@@ -50,7 +50,9 @@ consent decisions happen before sign-in. Two consequences worth knowing about:
   sequence of changes. Guest submissions are never deduplicated, because behind
   a proxy they cannot be told apart (see below), and discarding a real consent
   decision would be worse than an extra row. Rate limiting for guests belongs in
-  front of Magento, at the storefront's GraphQL proxy or the CDN.
+  front of Magento - at the deployment's own nginx proxy or CDN, where the real
+  client address is still visible and the ceiling is shared across app
+  instances rather than counted per replica.
 - **The recorded IP is the connecting peer.** Behind a CDN or load balancer that
   is the proxy, not the visitor, which makes the `ip_address` column useless as
   evidence. Fixing it is deployment configuration, not something this module can
