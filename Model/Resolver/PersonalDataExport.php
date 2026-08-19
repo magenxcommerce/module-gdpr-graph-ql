@@ -12,6 +12,7 @@ use Magenx\Gdpr\Model\ResourceModel\DsrRequest\CollectionFactory as RequestColle
 use Magenx\GdprGraphQl\Model\GdprAccess;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
@@ -49,6 +50,7 @@ class PersonalDataExport implements ResolverInterface
         private readonly CustomerRepositoryInterface $customerRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly SearchCriteriaBuilder $searchCriteriaBuilder,
+        private readonly SortOrderBuilder $sortOrderBuilder,
         private readonly ConsentLogCollectionFactory $consentLogCollectionFactory,
         private readonly DsrRequestFactory $requestFactory,
         private readonly RequestResource $requestResource,
@@ -103,14 +105,28 @@ class PersonalDataExport implements ResolverInterface
         ];
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /**
+     * Every order the customer placed, newest first.
+     *
+     * Sorted explicitly rather than left to the repository's default: an
+     * unsorted getList has no guaranteed row order between calls, so for a
+     * customer with more than one page of orders the pages would not partition
+     * the set and the export would silently list some orders twice and omit
+     * others.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     private function collectOrders(int $customerId): array
     {
         $orders = [];
         $page = 1;
+        $sortOrder = $this->sortOrderBuilder->setField('entity_id')->setDescendingDirection()->create();
 
         do {
-            $criteria = $this->searchCriteriaBuilder->addFilter('customer_id', $customerId)->create();
+            $criteria = $this->searchCriteriaBuilder
+                ->addFilter('customer_id', $customerId)
+                ->addSortOrder($sortOrder)
+                ->create();
             $criteria->setPageSize(self::ORDER_PAGE_SIZE);
             $criteria->setCurrentPage($page);
 
