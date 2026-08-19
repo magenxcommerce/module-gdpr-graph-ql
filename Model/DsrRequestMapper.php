@@ -18,6 +18,7 @@ class DsrRequestMapper
             'id' => (int) $request->getId(),
             'type' => strtoupper((string) $request->getData('type')),
             'status' => strtoupper((string) $request->getData('status')),
+            'customer_note' => $request->getData('customer_note'),
             'admin_note' => $request->getData('admin_note'),
             'requested_at' => $request->getData('requested_at'),
             'resolved_at' => $request->getData('resolved_at'),

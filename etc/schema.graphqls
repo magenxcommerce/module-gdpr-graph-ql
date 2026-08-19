@@ -1,7 +1,7 @@
 enum GdprRequestTypeEnum @doc(description: "The kind of data-subject request a customer can raise.") {
     EXPORT_DATA @doc(description: "Get a copy of my personal data.")
     ANONYMIZE_DATA @doc(description: "Replace my personal data with anonymized values, keeping the account.")
-    ERASE_DATA @doc(description: "Anonymize my personal data and disable the account. Requires admin approval.")
+    ERASE_DATA @doc(description: "Anonymize my personal data across the account and its order history, and sign the account out everywhere. Requires admin approval.")
 }
 
 enum GdprRequestStatusEnum @doc(description: "The lifecycle state of a data-subject request.") {
@@ -22,7 +22,7 @@ type Query {
 type Mutation {
     submitCookieConsent(input: GdprConsentInput!): Boolean @resolver(class: "Magenx\\GdprGraphQl\\Model\\Resolver\\SubmitCookieConsent") @doc(description: "Records a visitor's cookie-category choices for the audit trail. Works for guests and logged-in customers.")
 
-    requestGdprAction(input: GdprRequestInput!): GdprRequest @resolver(class: "Magenx\\GdprGraphQl\\Model\\Resolver\\RequestGdprAction") @doc(description: "Raises a data-subject request for the logged-in customer. anonymize_data runs immediately; erase_data is queued for admin approval.")
+    requestGdprAction(input: GdprRequestInput!): GdprRequest @resolver(class: "Magenx\\GdprGraphQl\\Model\\Resolver\\RequestGdprAction") @doc(description: "Raises a data-subject request for the logged-in customer. anonymize_data runs immediately; erase_data is queued for admin approval. Rejected while a request of the same type is still pending.")
 }
 
 type GdprCookieGroup @doc(description: "A cookie consent category (necessary, analytics, marketing, preferences).") {
@@ -48,14 +48,15 @@ input GdprConsentInput @doc(description: "A visitor's choice for each non-essent
 
 input GdprRequestInput @doc(description: "Input for raising a data-subject request.") {
     type: GdprRequestTypeEnum!
-    note: String @doc(description: "Optional note from the customer.")
+    note: String @doc(description: "Optional note from the customer. Stored as customer_note and truncated at 1000 characters.")
 }
 
 type GdprRequest @doc(description: "A data-subject request and its current status.") {
     id: Int
     type: GdprRequestTypeEnum
     status: GdprRequestStatusEnum
-    admin_note: String @doc(description: "Note left by the admin when approving or denying.")
+    customer_note: String @doc(description: "The note the customer attached when raising the request.")
+    admin_note: String @doc(description: "Note recorded by the admin when approving or denying.")
     requested_at: String
     resolved_at: String
 }
