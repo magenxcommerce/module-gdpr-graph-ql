@@ -1,0 +1,25 @@
+{
+    "name": "magenxcommerce/module-gdpr-graph-ql",
+    "description": "GraphQL surface for the GDPR cookie registry, consent logging and data-subject request tracking (magenxcommerce/module-gdpr).",
+    "config": {
+        "sort-packages": true
+    },
+    "require": {
+        "php": "~8.1.0||~8.2.0||~8.3.0||~8.4.0",
+        "magento/framework": "*",
+        "magento/module-graph-ql": "*",
+        "magenxcommerce/module-gdpr": "*"
+    },
+    "type": "magento2-module",
+    "license": [
+        "MIT"
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Magenx\\GdprGraphQl\\": ""
+        }
+    }
+}

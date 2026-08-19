@@ -1,0 +1,103 @@
+enum GdprRequestTypeEnum @doc(description: "The kind of data-subject request a customer can raise.") {
+    EXPORT_DATA @doc(description: "Get a copy of my personal data.")
+    ANONYMIZE_DATA @doc(description: "Replace my personal data with anonymized values, keeping the account.")
+    ERASE_DATA @doc(description: "Anonymize my personal data and disable the account. Requires admin approval.")
+}
+
+enum GdprRequestStatusEnum @doc(description: "The lifecycle state of a data-subject request.") {
+    PENDING @doc(description: "Waiting for admin review (erase requests only).")
+    APPROVED @doc(description: "Approved by an admin; the underlying action has run.")
+    DENIED @doc(description: "Rejected by an admin.")
+    COMPLETED @doc(description: "The requested action has run (export / anonymize run immediately).")
+}
+
+type Query {
+    gdprCookieGroups: [GdprCookieGroup] @resolver(class: "Magenx\\GdprGraphQl\\Model\\Resolver\\CookieGroups") @doc(description: "The store's cookie categories and the cookies declared in each, for the cookie policy page and consent banner.")
+
+    myGdprRequests: [GdprRequest] @resolver(class: "Magenx\\GdprGraphQl\\Model\\Resolver\\MyGdprRequests") @doc(description: "The logged-in customer's data-subject request history.") @cache(cacheable: false)
+
+    myPersonalDataExport: GdprPersonalDataExport @resolver(class: "Magenx\\GdprGraphQl\\Model\\Resolver\\PersonalDataExport") @doc(description: "The logged-in customer's own profile, addresses, order summary and consent history, for download. Logs a completed export_data request.") @cache(cacheable: false)
+}
+
+type Mutation {
+    submitCookieConsent(input: GdprConsentInput!): Boolean @resolver(class: "Magenx\\GdprGraphQl\\Model\\Resolver\\SubmitCookieConsent") @doc(description: "Records a visitor's cookie-category choices for the audit trail. Works for guests and logged-in customers.")
+
+    requestGdprAction(input: GdprRequestInput!): GdprRequest @resolver(class: "Magenx\\GdprGraphQl\\Model\\Resolver\\RequestGdprAction") @doc(description: "Raises a data-subject request for the logged-in customer. anonymize_data runs immediately; erase_data is queued for admin approval.")
+}
+
+type GdprCookieGroup @doc(description: "A cookie consent category (necessary, analytics, marketing, preferences).") {
+    code: String @doc(description: "Category code.")
+    label: String @doc(description: "Display label.")
+    description: String @doc(description: "Explanation shown to visitors.")
+    is_required: Boolean @doc(description: "Whether this category cannot be declined.")
+    cookies: [GdprCookie] @doc(description: "The active cookies declared in this category.")
+}
+
+type GdprCookie @doc(description: "A single cookie this store sets or relies on.") {
+    name: String @doc(description: "Cookie name, or a trailing-* prefix (e.g. _ga_*).")
+    purpose: String @doc(description: "What the cookie is for.")
+    duration_label: String @doc(description: "How long it lives, as display text (e.g. \"1 hour\", \"Session\").")
+    source: String @doc(description: "Who sets it: storefront, auth or google.")
+}
+
+input GdprConsentInput @doc(description: "A visitor's choice for each non-essential cookie category. necessary is implied and always granted.") {
+    analytics: Boolean!
+    marketing: Boolean!
+    preferences: Boolean!
+}
+
+input GdprRequestInput @doc(description: "Input for raising a data-subject request.") {
+    type: GdprRequestTypeEnum!
+    note: String @doc(description: "Optional note from the customer.")
+}
+
+type GdprRequest @doc(description: "A data-subject request and its current status.") {
+    id: Int
+    type: GdprRequestTypeEnum
+    status: GdprRequestStatusEnum
+    admin_note: String @doc(description: "Note left by the admin when approving or denying.")
+    requested_at: String
+    resolved_at: String
+}
+
+type GdprPersonalDataExport @doc(description: "The logged-in customer's own data, for a client-side download.") {
+    generated_at: String
+    profile: GdprExportProfile
+    addresses: [GdprExportAddress]
+    orders: [GdprExportOrder]
+    consent_history: [GdprExportConsent]
+}
+
+type GdprExportProfile {
+    firstname: String
+    lastname: String
+    email: String
+    date_of_birth: String
+}
+
+type GdprExportAddress {
+    firstname: String
+    lastname: String
+    street: [String]
+    city: String
+    region: String
+    postcode: String
+    country_code: String
+    telephone: String
+}
+
+type GdprExportOrder {
+    increment_id: String
+    created_at: String
+    status: String
+    grand_total: Float
+}
+
+type GdprExportConsent {
+    context: String
+    necessary: Boolean
+    analytics: Boolean
+    marketing: Boolean
+    preferences: Boolean
+    created_at: String
+}
